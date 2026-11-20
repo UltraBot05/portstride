@@ -4,12 +4,24 @@ The [machine-readable matrix](filesystem-coverage.json) records the current pref
 
 | Filesystem | Disposable directory | Disposable volume | Simulated behavior |
 |---|---|---|---|
-| APFS | Current host; case variant unspecified | Not tested | Case and capability logic |
+| APFS | Current host | Case-insensitive ASCII collision and symlink inventory; case-sensitive distinct ASCII names | Case and capability logic |
 | NTFS | Not tested | Not tested | Read-only capability |
-| exFAT | Not tested | Not tested | Generic capabilities |
-| FAT32 | Not tested | Not tested | Per-file size bound |
+| exFAT | Not tested | Blocked during image creation | Generic capabilities |
+| FAT32 | Not tested | Small source completed preflight; 4 GiB logical sparse source blocked; no copy | Per-file size bound |
 | Other mounted | Not tested | Not tested | Unknown capability fallback |
 
 For future integration testing, obtain explicit authorization for a disposable mounted volume, confirm its identity and that it contains no personal data, then run read-only inspection against separately prepared disposable fixtures. Record filesystem, mount flags, OS and exact results. This project does not create, mount, format, unmount or detach volumes automatically.
 
-Fixture smoke tests on the current APFS host exercised flat, nested, wide and edge directories, including Unicode names and valid and broken symlinks. A sparse candidate was created using `set_len`; physical sparseness was not verified. Permission-denial scenarios were skipped. Generator-level FAT-family restriction checks use synthetic metadata. Existing engine tests use synthetic FAT-size metadata; they do not verify a FAT mount.
+Fixture smoke tests on the current APFS host exercised flat, nested, wide and edge directories, including Unicode names and valid and broken symlinks. A sparse candidate was created using `set_len`; physical sparseness was not verified. Permission-denial scenarios were skipped. Generator-level FAT-family restriction checks use synthetic metadata. Existing synthetic engine tests use FAT-size metadata and do not themselves verify a FAT mount.
+
+M0.6b partial run on macOS 27.2.1 (26B131), arm64: the case-insensitive image produced the expected ASCII collision and symlink inventory; the case-sensitive image produced no ASCII collision for distinct case variants. Twelve real observations were recorded across APFS and FAT32; these include filesystem behavior and preflight checks, not twelve transfer tests. The modern exFAT creation attempt failed with `LOCALIZED_STRING_UNAVAILABLE`; the documented hdiutil alternative returned `Operation not permitted`. No exFAT image was produced. A separate real FAT32 image was identified by the OS attachment plist. A small file completed preflight, and a 4,294,967,296-byte logical sparse APFS source, with zero reported allocated bytes, produced the expected `DEST_FILE_TOO_LARGE` finding against the `msdos` upper bound. No file was copied. All four images were identity-verified, detached and removed; sparse sources were removed; private manifests and reports were retained.
+
+A further APFS image exercised an existing-destination blocker, composed/decomposed lookup, an xattr round trip, a hard-link inode match, an ACL entry, sparse logical versus allocated bytes, and partial inventory for a mode-000 directory. These do not establish metadata preservation during transfer. See [structured partial results](m06b-real-results.json).
+
+### exFAT investigation and next attempt
+
+The prior session's command transcript records two fresh 6 GiB creation attempts: `diskutil image create blank --plist --format RAW --size 6442450944 --volumeName PortstrideEx --fs ExFAT <new-private-image>` and `hdiutil create -size 6g -type UDIF -fs ExFAT -volname PortstrideEx -plist <different-new-private-image>`. The retained manifests record errors, but not original argument arrays, numeric exit codes or complete stderr; the transcript is the source for the command shapes. Installed utility help lists exFAT, and private run directories were user-owned with mode 0700. These facts do not establish the root cause or that exFAT is unsupported.
+
+A future attempt should first investigate service and authorization state read-only, then request separate approval for a single fresh manifest-owned image and capture the exact arguments, numeric exit status and stderr. If the OS requires access or privileges, stop rather than changing security settings or using a physical device. A manual Disk Utility image workflow, if separately approved, must create a new bounded image file in a private directory, verify that the mounted volume is backed by that exact image before any fixture writes, and use the independent identity and cleanup gates in [the M0.6a plan](m06a-filesystem-integration-plan.md). Never select or erase an existing physical disk.
+
+The additional APFS setup initially stopped after Python reported `os.setxattr` unavailable; its partial fixture was retained. A separately approved attempt with the macOS xattr utility produced the reported round trip. The approved 4 GiB logical sparse source was created on host APFS in a private run directory, not on the FAT32 image.

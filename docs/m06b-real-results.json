@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "scope": "Partial M0.6b preflight evidence. Destination fixtures were created on disposable images; the approved 4 GiB logical sparse source was created on host APFS in a private run directory. No copy.",
+  "environment": {
+    "os": "macOS 27.2.1",
+    "build": "26B131",
+    "architecture": "arm64"
+  },
+  "cases": [
+    {
+      "id": "apfs_ci_ascii_collision",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "Two case variants in separate source roots",
+      "expected": "case-insensitive destination reports ASCII case collision",
+      "diagnostic_code": "CASE_NAME_COLLISION",
+      "remaining_uncertainty": "ASCII only"
+    },
+    {
+      "id": "apfs_symlink_inventory",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "One valid and one broken symlink counted",
+      "expected": "one valid and one broken link are inventoried without following",
+      "diagnostic_code": "SYMLINK_CAPABILITY_UNVERIFIED",
+      "remaining_uncertainty": "No preservation tested"
+    },
+    {
+      "id": "apfs_cs_ascii_distinct",
+      "filesystem": "APFS case-sensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "Two case-variant files, no collision blocker",
+      "expected": "case-sensitive destination allows two ASCII case variants without collision",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "Unicode case rules not established"
+    },
+    {
+      "id": "fat32_small_preflight",
+      "filesystem": "FAT32",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "Small source inspection completed",
+      "expected": "small source completes preflight without size blocker",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "Not a copy"
+    },
+    {
+      "id": "fat32_large_sparse",
+      "filesystem": "FAT32",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "4 GiB logical source with zero reported allocation produced blocker",
+      "expected": "source above 4 GiB minus one triggers per-file blocker",
+      "diagnostic_code": "DEST_FILE_TOO_LARGE",
+      "remaining_uncertainty": "msdos bound reported as upper bound"
+    },
+    {
+      "id": "apfs_existing_destination",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "Existing destination entry produced blocker",
+      "expected": "existing destination entry triggers blocker",
+      "diagnostic_code": "PATH_UNSUPPORTED",
+      "remaining_uncertainty": "Point-in-time observation"
+    },
+    {
+      "id": "apfs_unicode_lookup",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "Decomposed spelling looked up composed filename",
+      "expected": "record actual lookup equivalence without assuming general normalization",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "No general Unicode equivalence guarantee"
+    },
+    {
+      "id": "apfs_xattr",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "xattr write and read roundtrip succeeded",
+      "expected": "xattr can be written and read back in setup",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "No copy or preservation tested"
+    },
+    {
+      "id": "apfs_hardlink",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "Two names reported the same inode",
+      "expected": "hard-link names refer to the same inode",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "Transfer preservation not tested"
+    },
+    {
+      "id": "apfs_sparse",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "1 MiB logical file reported zero allocated bytes",
+      "expected": "record logical and allocated bytes separately",
+      "diagnostic_code": "CAPABILITY_UNVERIFIED",
+      "remaining_uncertainty": "Allocation may change"
+    },
+    {
+      "id": "apfs_acl",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "ACL command succeeded and entry appeared",
+      "expected": "record whether an ACL entry can be added and observed",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "No preservation tested"
+    },
+    {
+      "id": "apfs_permission",
+      "filesystem": "APFS case-insensitive",
+      "evidence": "real",
+      "status": "PASS",
+      "observation": "Mode-000 source yielded partial inventory",
+      "expected": "inaccessible source yields partial inventory and inspection failure",
+      "diagnostic_code": "FS_ERROR",
+      "remaining_uncertainty": "ACL and sandbox behavior can differ"
+    },
+    {
+      "id": "exfat_provisioning",
+      "filesystem": "exFAT",
+      "evidence": "real_attempt",
+      "status": "BLOCKED",
+      "observation": "diskutil failed LOCALIZED_STRING_UNAVAILABLE; hdiutil returned Operation not permitted",
+      "expected": "Expected failure and skip handling",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "Root cause undetermined; original numeric exit codes not preserved"
+    },
+    {
+      "id": "fat32_large_aggregate",
+      "filesystem": "FAT32",
+      "evidence": "not_run",
+      "status": "SKIP",
+      "observation": "Not run under approved logical fixture budget",
+      "expected": "Expected failure and skip handling",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "Prior synthetic tests only"
+    },
+    {
+      "id": "readonly_reattach_nested",
+      "filesystem": "all",
+      "evidence": "not_run",
+      "status": "SKIP",
+      "observation": "Not run",
+      "expected": "Expected failure and skip handling",
+      "diagnostic_code": null,
+      "remaining_uncertainty": "Requires separate identity-safe lifecycle and approval"
+    }
+  ],
+  "setup_note": "Initial APFS metadata setup stopped after Python os.setxattr was unavailable; previously created fixtures were retained. A separately approved xattr utility attempt succeeded."
+}

@@ -5,7 +5,7 @@
     {
       "filesystem": "APFS",
       "real_disposable_directory": "tested on current host; case variant unspecified",
-      "real_disposable_volume": "not tested",
+      "real_disposable_volume": "macOS 27.2.1: ASCII case, symlink inventory, Unicode lookup, conflict, xattr, ACL, hard link, sparse and permission observations; remaining cases untested",
       "mocked": "case and capability logic",
       "unknown": "Unicode matching, metadata, mount boundaries and future writes"
     },
@@ -19,16 +19,16 @@
     {
       "filesystem": "exFAT",
       "real_disposable_directory": "not tested",
-      "real_disposable_volume": "not tested",
+      "real_disposable_volume": "blocked: diskutil image creation failed; hdiutil reported Operation not permitted",
       "mocked": "generic capability logic",
       "unknown": "naming, metadata and write access"
     },
     {
       "filesystem": "FAT32",
       "real_disposable_directory": "not tested",
-      "real_disposable_volume": "not tested",
+      "real_disposable_volume": "macOS 27.2.1: OS attach plist identified FAT32; small source completed preflight and 4 GiB logical sparse file blocked by msdos upper bound; remaining cases untested",
       "mocked": "individual file-size limit and aggregate sizes",
-      "unknown": "actual mount subtype and metadata behavior"
+      "unknown": "engine cannot distinguish msdos subtype; OS attach plist identified this test volume as FAT32; metadata behavior remains unverified"
     },
     {
       "filesystem": "other mounted",
@@ -43,9 +43,20 @@
     "nested_directories": "real disposable-directory smoke test on current host",
     "wide_directories": "real disposable-directory smoke test on current host",
     "symlinks": "real disposable-directory test on current host",
-    "unicode": "real directory smoke test; filesystem equivalence not verified",
-    "sparse": "set_len candidate created; physical sparseness unknown",
-    "permissions": "skipped; not reliably reproducible",
-    "fat_limits": "synthetic metadata in engine tests and generator simulation; no FAT volume tested"
+    "unicode": "real APFS composed/decomposed lookup observed; no general equivalence inferred",
+    "sparse": "APFS disposable-image 1 MiB logical file reported zero allocated bytes; generator sparse candidate physical behavior not generally verified",
+    "permissions": "real APFS mode-000 directory produced partial inventory; generator permission scenario skipped",
+    "fat_limits": "synthetic metadata in engine tests and generator simulation; separate real FAT32 preflight evidence recorded under m06b_partial"
+  },
+  "m06b_partial": {
+    "os": "macOS 27.2.1 (26B131)",
+    "architecture": "arm64",
+    "real_cases_passed": 12,
+    "status": "incomplete",
+    "fat32": "small file and oversized sparse-source preflight tested on FAT32 image; actual copy not performed",
+    "exfat": "blocked during image creation",
+    "cleanup": "four verified APFS/FAT32 images detached and removed; sparse sources removed; private reports retained",
+    "simulated_integration_cases": 0,
+    "note": "Twelve real observations include filesystem behavior and preflight checks, not twelve independent transfer tests. Workspace suite includes synthetic tests. See m06b-real-results.json."
   }
 }
