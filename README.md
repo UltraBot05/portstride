@@ -29,15 +29,29 @@ The macOS mount probe opens the destination without following its final symlink 
 - On Unix, enumeration holds directory descriptors and opens children relative to them with no-follow flags. It checks a directory's device and inode after opening and again after scanning. A changed or deleted directory is reported as an incomplete scan. It stops at cycles or a depth of 256. A rename after a directory is opened does not redirect the descriptor, but the original directory can be moved or modified while it is scanned. File content and metadata can change without detection. The scan is not an atomic snapshot, and not all concurrent changes are detectable.
 - Initial source-parent and destination acquisition still resolves intermediate path components through the OS. Only the final component of each acquisition is opened with no-follow; a source parent or destination that is itself a symlink is rejected. A concurrent change before acquisition can select a different directory. The destination probe and scanner acquire separate descriptors and compare their device and inode. A mismatch discards the probe; inode reuse, concurrent renames, and remount races are not fully excluded. The selected destination path is rechecked against its descriptor at the end, but it can change again afterward. Descriptor-relative destination conflict checks inspect only each selected root name and stop at an existing entry, so they do not traverse conflicting destination subtrees. No result guarantees a later write.
 - Inspection continues across nested filesystems. When an entry reports a device ID different from its parent, `SOURCE_DEVICE_CHANGE` records the observation without blocking or claiming a mount was identified. Equal device IDs do not prove there is no mount boundary; APFS volumes, same-device mounts and network filesystems need additional identification. Symlinks are not followed. This policy is read-only and is not a transfer policy.
-- Exact path collisions and ASCII case collisions are detected when the destination reports case insensitivity; ASCII components are compared separately even under non-ASCII parents. Unicode normalization, filesystem-specific case folding, invalid names, path limits and all existing-name equivalences are not fully checked. Non-Unicode filenames can be inspected but cannot be faithfully represented by `--show-paths`.
+- Exact path collisions are detected regardless of case sensitivity. ASCII case collisions are detected when the destination reports case insensitivity; ASCII components are compared separately even under non-ASCII parents. Unicode normalization, filesystem-specific case folding, invalid names, path limits and all existing-name equivalences are not fully checked. Non-Unicode filenames can be inspected but cannot be faithfully represented by `--show-paths`.
 - Metadata, ACLs, xattrs, hard-link relationships, sparse allocation, mount boundaries, cloud placeholders, filename restrictions and exact destination write ability are not fully assessed. Unknown capabilities remain `null`; metadata preservation is never claimed.
 - Scan and destination failures yield partial counts and findings. If the opened destination is encountered while scanning a source, traversal stops at that directory and reports a blocker. Concurrent renames and aliases can still defeat relationship checks. Exact identity and snapshot validation remain future work.
 - Logical free-space comparisons are warnings because no sparse-copy or metadata policy has been selected. A detected single-file limit and a confirmed read-only mount are blockers.
 - The example diagnosis suggests opening a system tool, but this milestone only provides instructions. Move verification policy, conflict policy, and transfer semantics remain open design decisions.
-- The roadmap's benchmark harness, baseline timings and physical filesystem matrix were not part of the requested read-only implementation. No removable volume was modified or tested.
+- The roadmap's complete benchmark harness, transfer baseline timings and physical filesystem matrix remain incomplete. No removable volume was modified or tested.
 
 Run `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace` for verification.
 
 ## Licensing
 
 The project license has not yet been selected. No license grant is implied by publication.
+
+## Scanner fixture and benchmark harness
+
+The harness generates deterministic fixtures in a newly created directory and measures read-only inspection. It does not implement a copy benchmark. It refuses an existing output path and never removes a fixture. An interrupted or failed generation can leave a partial directory that the user must inspect before removing.
+
+```sh
+cargo run -p portstride --bin portstride-harness -- generate /private/tmp/portstride-fixture-new 1000 128 flat
+mkdir /private/tmp/portstride-benchmark-destination
+cargo run -p portstride --bin portstride-harness -- benchmark /private/tmp/portstride-fixture-new /private/tmp/portstride-benchmark-destination 5 1 flat
+```
+
+Scenarios include flat files, nested and wide directories, empty directories, Unicode names, conflicting source names, valid and broken links, and a sparse-file candidate. Physical sparseness is not verified. The simulated scenario evaluates a synthetic FAT-family size limit without creating a large file or testing a filesystem. Permission-denial scenarios are reported as skipped where they cannot be demonstrated reliably. File count, depth and logical data are bounded; filesystem allocation granularity and metadata prevent a strict cap on physical disk use. Use a disposable, trusted parent that cannot be modified concurrently. Unix parent components are opened with no-follow flags; generation is unsupported on non-Unix. A same-user process can replace a newly created directory between creation and opening, redirecting exclusive creation into that directory. Existing files are not overwritten. The report distinguishes warm-up and measured runs and records cache state as uncontrolled; timings are not copy throughput.
+
+Real removable or disposable-volume tests have not been run. See [filesystem coverage](docs/filesystem-coverage.md) for the distinction between simulated and real tests.

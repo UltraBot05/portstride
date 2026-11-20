@@ -2,10 +2,50 @@
   "schema_version": 1,
   "scope": "read-only preflight, not transfer or filesystem certification",
   "filesystems": [
-    {"filesystem": "APFS", "real_disposable_directory": "tested on current host; case variant unspecified", "real_disposable_volume": "not tested", "mocked": "case and capability logic", "unknown": "Unicode matching, metadata, mount boundaries and future writes"},
-    {"filesystem": "NTFS", "real_disposable_directory": "not tested", "real_disposable_volume": "not tested", "mocked": "read-only capability logic", "unknown": "driver behavior, metadata and write access"},
-    {"filesystem": "exFAT", "real_disposable_directory": "not tested", "real_disposable_volume": "not tested", "mocked": "generic capability logic", "unknown": "naming, metadata and write access"},
-    {"filesystem": "FAT32", "real_disposable_directory": "not tested", "real_disposable_volume": "not tested", "mocked": "individual file-size limit and aggregate sizes", "unknown": "actual mount subtype and metadata behavior"},
-    {"filesystem": "other mounted", "real_disposable_directory": "not tested", "real_disposable_volume": "not tested", "mocked": "unknown capability fallback", "unknown": "filesystem-dependent semantics"}
-  ]
+    {
+      "filesystem": "APFS",
+      "real_disposable_directory": "tested on current host; case variant unspecified",
+      "real_disposable_volume": "not tested",
+      "mocked": "case and capability logic",
+      "unknown": "Unicode matching, metadata, mount boundaries and future writes"
+    },
+    {
+      "filesystem": "NTFS",
+      "real_disposable_directory": "not tested",
+      "real_disposable_volume": "not tested",
+      "mocked": "read-only capability logic",
+      "unknown": "driver behavior, metadata and write access"
+    },
+    {
+      "filesystem": "exFAT",
+      "real_disposable_directory": "not tested",
+      "real_disposable_volume": "not tested",
+      "mocked": "generic capability logic",
+      "unknown": "naming, metadata and write access"
+    },
+    {
+      "filesystem": "FAT32",
+      "real_disposable_directory": "not tested",
+      "real_disposable_volume": "not tested",
+      "mocked": "individual file-size limit and aggregate sizes",
+      "unknown": "actual mount subtype and metadata behavior"
+    },
+    {
+      "filesystem": "other mounted",
+      "real_disposable_directory": "not tested",
+      "real_disposable_volume": "not tested",
+      "mocked": "unknown capability fallback",
+      "unknown": "filesystem-dependent semantics"
+    }
+  ],
+  "fixture_evidence": {
+    "flat_regular_files": "real disposable-directory test on current APFS host",
+    "nested_directories": "real disposable-directory smoke test on current host",
+    "wide_directories": "real disposable-directory smoke test on current host",
+    "symlinks": "real disposable-directory test on current host",
+    "unicode": "real directory smoke test; filesystem equivalence not verified",
+    "sparse": "set_len candidate created; physical sparseness unknown",
+    "permissions": "skipped; not reliably reproducible",
+    "fat_limits": "synthetic metadata in engine tests and generator simulation; no FAT volume tested"
+  }
 }
