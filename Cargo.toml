@@ -1,0 +1,3 @@
+[workspace]
+members = ["engine", "platform-macos", "cli"]
+resolver = "2"

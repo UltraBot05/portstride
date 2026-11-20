@@ -1,0 +1,9 @@
+[package]
+name = "portstride"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+portstride-engine = { path = "../engine" }
+portstride-platform-macos = { path = "../platform-macos" }
+serde_json = "1"

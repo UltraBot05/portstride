@@ -1,0 +1,115 @@
+{
+  "api_version": 3,
+  "kind": "preflight_report",
+  "status": "incomplete",
+  "inspection_complete": false,
+  "transfer_readiness": "not_assessed",
+  "path_policy": "redacted source indices; no local names or absolute paths",
+  "destination": {
+    "volume_id": "device:example",
+    "probe_identity": [
+      1,
+      2
+    ],
+    "filesystem": "apfs",
+    "writable": null,
+    "mount_read_only": false,
+    "available_bytes": 1000000000,
+    "max_file_bytes": null,
+    "max_file_bytes_kind": null,
+    "case_sensitive": false,
+    "supports_symlink": null,
+    "supports_xattrs": null,
+    "supports_acl": null,
+    "supports_clone": null,
+    "supports_atomic_rename": null,
+    "uncertainty": [
+      "Capabilities were not verified.",
+      "Folder write permission, metadata and name semantics are unverified."
+    ]
+  },
+  "inventory": {
+    "files": 0,
+    "directories": 0,
+    "symlinks": 0,
+    "special_files": 0,
+    "logical_bytes": 0,
+    "largest_file_bytes": 0,
+    "size_buckets": {
+      "under_1_mib": 0,
+      "from_1_mib_to_1_gib": 0,
+      "at_least_1_gib": 0
+    },
+    "complete": false
+  },
+  "issues": [
+    {
+      "code": "FS_ERROR",
+      "severity": "blocker",
+      "affected_paths": [
+        "source[1]"
+      ],
+      "affected_count": 1,
+      "evidence": "Cannot inspect source entry: entity not found",
+      "confidence": "observed",
+      "category": "inspection_failure",
+      "file_size": null,
+      "remedies": [
+        {
+          "action": "choose_destination",
+          "risk": "non_destructive",
+          "execution": "instructions_only",
+          "description": "Choose a compatible destination."
+        },
+        {
+          "action": "inspect_permissions",
+          "risk": "non_destructive",
+          "execution": "instructions_only",
+          "description": "Check the path, permissions, and storage connection; retry inspection."
+        },
+        {
+          "action": "cancel",
+          "risk": "non_destructive",
+          "execution": "instructions_only",
+          "description": "Cancel the operation."
+        }
+      ]
+    },
+    {
+      "code": "CAPABILITY_UNVERIFIED",
+      "severity": "warning",
+      "affected_paths": [],
+      "affected_count": 0,
+      "evidence": "Metadata, Unicode normalization and case equivalence, non-UTF-8 names, filename restrictions, write permissions, source stability and transfer policies are not fully verified.",
+      "confidence": "unknown",
+      "category": "unknown",
+      "file_size": null,
+      "remedies": [
+        {
+          "action": "cancel",
+          "risk": "non_destructive",
+          "execution": "instructions_only",
+          "description": "Cancel the operation."
+        }
+      ]
+    },
+    {
+      "code": "INSPECTION_INCOMPLETE",
+      "severity": "warning",
+      "affected_paths": [],
+      "affected_count": 0,
+      "evidence": "One or more required M0 checks failed, were skipped, or lacked required probe observations.",
+      "confidence": "unknown",
+      "category": "inspection_failure",
+      "file_size": null,
+      "remedies": [
+        {
+          "action": "cancel",
+          "risk": "non_destructive",
+          "execution": "instructions_only",
+          "description": "Cancel the operation."
+        }
+      ]
+    }
+  ]
+}

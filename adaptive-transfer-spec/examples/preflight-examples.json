@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "description": "Illustrative expected diagnostic results; no actual volume will be modified by these examples.",
+  "cases": [
+    {
+      "id": "fat32_8gb_single_file",
+      "input": {"source_file": "video.mkv", "file_bytes": 8804682956, "destination_fs": "FAT32", "free_bytes": 50000000000},
+      "expected": {
+        "status": "blocked",
+        "code": "DEST_FILE_TOO_LARGE",
+        "max_file_bytes": 4294967295,
+        "remedies": [
+          {"action": "choose_destination", "risk": "non_destructive"},
+          {"action": "backup_then_reformat", "target_fs": "exFAT", "risk": "destructive", "execution": "opens_system_tool"},
+          {"action": "cancel", "risk": "non_destructive"}
+        ],
+        "automatic_reformat_allowed": false
+      }
+    },
+    {
+      "id": "ntfs_read_only_macos",
+      "input": {"destination_fs": "NTFS", "os": "macOS", "destination_mount_writable": false},
+      "expected": {"status": "blocked", "code": "DEST_READ_ONLY", "remedies": ["choose_destination", "inspect_permissions", "backup_then_reformat"], "automatic_reformat_allowed": false}
+    },
+    {
+      "id": "large_sequential_copy",
+      "input": {"file_count": 1, "bytes": 200000000000, "destination_fs": "exFAT", "source_and_dest_same_volume": false},
+      "expected": {"status": "ready", "initial_strategy": "sequential", "initial_file_workers": 1, "reason_code": "ONE_LARGE_FILE_SEQUENTIAL"}
+    },
+    {
+      "id": "many_file_project",
+      "input": {"file_count": 40000, "bytes": 12000000000, "destination_fs": "exFAT", "source_and_dest_same_volume": false},
+      "expected": {"status": "ready_if_capable", "initial_strategy": "bounded_concurrent_files", "file_worker_count": "tuned_at_runtime", "reason_code": "MANY_INDEPENDENT_FILES"}
+    },
+    {
+      "id": "case_collision",
+      "input": {"source_paths": ["src/README.md", "src/readme.md"], "destination_case_sensitive": false},
+      "expected": {"status": "blocked", "code": "CASE_NAME_COLLISION", "automatic_overwrite_allowed": false}
+    },
+    {
+      "id": "exfat_to_apfs_request",
+      "input": {"from_fs": "exFAT", "to_fs": "APFS", "os": "macOS"},
+      "expected": {"recommended_workflow": "verified_backup_then_erase_reformat_restore", "risk": "destructive", "in_place_lossless_conversion_promised": false}
+    }
+  ]
+}
