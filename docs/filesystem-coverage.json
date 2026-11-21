@@ -19,9 +19,9 @@
     {
       "filesystem": "exFAT",
       "real_disposable_directory": "not tested",
-      "real_disposable_volume": "blocked: diskutil image creation failed; hdiutil reported Operation not permitted",
+      "real_disposable_volume": "macOS 27.2.1: short-name ExFAT RAW image; case, Unicode lookup, destination conflict, symlink inventory and xattr roundtrip observed; no copy",
       "mocked": "generic capability logic",
-      "unknown": "naming, metadata and write access"
+      "unknown": "metadata portability, ACLs, hard links, sparse behavior, read-only mount, permissions and future writes"
     },
     {
       "filesystem": "FAT32",
@@ -58,5 +58,13 @@
     "cleanup": "four verified APFS/FAT32 images detached and removed; sparse sources removed; private reports retained",
     "simulated_integration_cases": 0,
     "note": "Twelve real observations include filesystem behavior and preflight checks, not twelve independent transfer tests. Workspace suite includes synthetic tests. See m06b-real-results.json."
+  },
+  "m06c": {
+    "status": "partial",
+    "os": "macOS 27.2.1 (26B131)",
+    "real_exfat_observations": 6,
+    "evidence": "m06c-exfat-results.json",
+    "root_cause": "12-character prior volume name exceeded documented 11-character limit; shorter name succeeded, suggesting but not proving cause",
+    "cleanup": "image identity verified, detached and removed; private manifests, logs, reports and tiny source fixtures retained"
   }
 }

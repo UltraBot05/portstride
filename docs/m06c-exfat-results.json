@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "environment": {
+    "os": "macOS 27.2.1",
+    "build": "26B131",
+    "architecture": "arm64"
+  },
+  "filesystem": "ExFAT",
+  "evidence": "real_disposable_image",
+  "cleanup": "verified detached image removed; private evidence retained",
+  "no_copy_performed": true,
+  "cases": [
+    {
+      "scenario": "image_and_case",
+      "status": "pass",
+      "observation": "diskutil attached ExFAT; lowercase lookup matched case-variant name",
+      "expected_or_scope": "exfat, case_sensitive=false",
+      "diagnostic_codes": []
+    },
+    {
+      "scenario": "ascii_collision",
+      "status": "pass",
+      "observation": "Portstride reported an ASCII source-name collision",
+      "expected_or_scope": "blocker",
+      "diagnostic_codes": [
+        "CASE_NAME_COLLISION"
+      ]
+    },
+    {
+      "scenario": "existing_destination",
+      "status": "pass",
+      "observation": "Portstride reported an existing destination entry",
+      "expected_or_scope": "blocker",
+      "diagnostic_codes": [
+        "PATH_UNSUPPORTED"
+      ]
+    },
+    {
+      "scenario": "symlinks",
+      "status": "pass",
+      "observation": "OS created valid and broken symlinks; inspector counted two",
+      "expected_or_scope": "capability remains unknown",
+      "diagnostic_codes": [
+        "SYMLINK_CAPABILITY_UNVERIFIED"
+      ]
+    },
+    {
+      "scenario": "unicode_lookup",
+      "status": "pass",
+      "observation": "decomposed spelling resolved a composed name",
+      "expected_or_scope": "point-in-time lookup observation",
+      "diagnostic_codes": []
+    },
+    {
+      "scenario": "xattr",
+      "status": "pass",
+      "observation": "xattr write and read round trip succeeded on this mounted volume",
+      "expected_or_scope": "no transfer preservation inferred",
+      "diagnostic_codes": []
+    }
+  ],
+  "provisioning": {
+    "status": "succeeded",
+    "image_size_bytes": 6442450944,
+    "format": "RAW",
+    "volume_name": "PS_EXFAT",
+    "create_exit": 0,
+    "hypothesis": "Earlier name PortstrideEx has 12 characters; Apple documents an 11-character MS-DOS and ExFAT name limit. Short-name repeat succeeded with otherwise matching diskutil parameters. This supports but does not conclusively prove the cause.",
+    "prior_exit_codes": "not preserved"
+  },
+  "unverified": [
+    "read-only mount",
+    "ACL",
+    "hard links",
+    "permissions",
+    "sparse allocation",
+    "detach/reattach identity",
+    "nested mounts",
+    "metadata transfer preservation",
+    "large aggregate"
+  ]
+}
