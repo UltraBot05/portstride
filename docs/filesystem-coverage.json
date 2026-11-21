@@ -75,5 +75,13 @@
     "identity": "same device/inode in this run; not durable",
     "report": "m0-readonly-reattach-result.json",
     "cleanup": "verified image detached and removed; private evidence retained"
+  },
+  "m0_two_blockers": {
+    "status": "partial",
+    "real_exfat": "macOS 27.2.1 mounted exFAT accepted all twelve tested punctuation/reserved-like names; chmod 0500 retained observed mode 0700",
+    "real_apfs": "effective access check tested on ordinary host APFS temporary directory with modes 0700 and 0500",
+    "limitations": "FAT-family on-disk restriction matches are warnings; mounted-driver mapping and untested FAT32/APFS case-sensitive cases remain unverified",
+    "evidence": "m0-filename-permission-evidence.json",
+    "cleanup": "test image verified detached and removed; private reports retained"
   }
 }

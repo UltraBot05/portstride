@@ -74,7 +74,7 @@ fn nested_destination_and_readonly_are_blocked() {
     let mut caps = bound_capabilities(&dest);
     caps.writable = Some(false);
     let report = inspect(std::slice::from_ref(&root), &dest, caps);
-    assert!(report.issues.iter().any(|i| i.code == "DEST_READ_ONLY"));
+    assert!(report.issues.iter().any(|i| i.code == "ACCESS_DENIED"));
     assert!(report.issues.iter().any(|i| i.code == "PATH_UNSUPPORTED"));
     fs::remove_dir_all(root).unwrap();
 }
@@ -390,5 +390,89 @@ fn generic_uncertainty_does_not_recommend_changing_destination() {
             .iter()
             .any(|r| r.action == "choose_destination")
     );
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn fat_family_forbidden_component_is_reported_as_driver_dependent() {
+    let root = fixture();
+    let dest = root.join("dest");
+    fs::create_dir_all(root.join("source")).unwrap();
+    fs::create_dir_all(&dest).unwrap();
+    fs::write(root.join("source/a:b"), b"data").unwrap();
+    for filesystem in ["exfat", "msdos"] {
+        let mut caps = bound_capabilities(&dest);
+        caps.filesystem = Some(filesystem.into());
+        let report = inspect(&[root.join("source")], &dest, caps);
+        assert!(
+            report
+                .issues
+                .iter()
+                .any(|i| i.code == "FILENAME_RESTRICTION_UNVERIFIED"
+                    && i.severity == "warning"
+                    && i.confidence == "unknown"
+                    && i.affected_paths == ["source[1]/entry[1]"])
+        );
+    }
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn fat_name_warning_does_not_apply_windows_reserved_names_or_other_filesystems() {
+    let root = fixture();
+    let dest = root.join("dest");
+    fs::create_dir_all(&dest).unwrap();
+    for name in ["CON", "valid.txt", "a:b"] {
+        fs::write(root.join(name), b"data").unwrap();
+    }
+    for (filesystem, name) in [
+        ("exfat", "CON"),
+        ("msdos", "valid.txt"),
+        ("apfs", "a:b"),
+        ("unknownfs", "a:b"),
+    ] {
+        let mut caps = bound_capabilities(&dest);
+        caps.filesystem = Some(filesystem.into());
+        let report = inspect(&[root.join(name)], &dest, caps);
+        assert!(
+            !report
+                .issues
+                .iter()
+                .any(|i| i.code == "FILENAME_RESTRICTION_UNVERIFIED"),
+            "{filesystem} {name}"
+        );
+    }
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn simulated_folder_access_and_mount_state_have_distinct_diagnostics() {
+    let root = fixture();
+    let dest = root.join("dest");
+    fs::create_dir_all(&dest).unwrap();
+    fs::write(root.join("source"), b"data").unwrap();
+    for (mount, writable, expected) in [
+        (Some(true), Some(false), Some("DEST_READ_ONLY")),
+        (Some(false), Some(false), Some("ACCESS_DENIED")),
+        (Some(false), Some(true), None),
+        (Some(false), None, None),
+    ] {
+        let mut caps = bound_capabilities(&dest);
+        caps.mount_read_only = mount;
+        caps.writable = writable;
+        let report = inspect(&[root.join("source")], &dest, caps);
+        let access: Vec<_> = report
+            .issues
+            .iter()
+            .filter(|i| matches!(i.code, "DEST_READ_ONLY" | "ACCESS_DENIED"))
+            .collect();
+        match expected {
+            Some(code) => assert_eq!(access.iter().map(|i| i.code).collect::<Vec<_>>(), [code]),
+            None => assert!(access.is_empty()),
+        }
+    }
     fs::remove_dir_all(root).unwrap();
 }

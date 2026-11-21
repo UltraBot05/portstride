@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "environment": {
+    "os": "macOS 27.2.1",
+    "build": "26B131",
+    "architecture": "arm64"
+  },
+  "evidence": "real disposable exFAT image plus local APFS temporary-directory test",
+  "exfat": {
+    "tested_name_creation": [
+      "normal.txt",
+      "CON",
+      "with:colon",
+      "with?question",
+      "with*star",
+      "with|pipe",
+      "with\"quote",
+      "with<less",
+      "with>greater",
+      "with\\backslash",
+      "trail.",
+      "trail "
+    ],
+    "observed": "All tested names were created by the macOS mounted driver; this does not establish other names or portability.",
+    "inspector_colon": "FILENAME_RESTRICTION_UNVERIFIED warning with unknown confidence",
+    "inspector_normal": "no filename restriction warning",
+    "folder_mode": "chmod 0500 resulted in observed mode 0700; denial not reproducible on this exFAT mount",
+    "folder_writable_observation": true
+  },
+  "apfs_temporary_directory": {
+    "mode_0700_observation": true,
+    "mode_0500_observation": false,
+    "scope": "descriptor-bound access check, not future write success"
+  },
+  "untested": [
+    "APFS case-sensitive image filename rules",
+    "FAT32 image filename rules",
+    "exFAT denied folder permission",
+    "ACL-specific access and sandbox policy",
+    "write success and metadata preservation"
+  ],
+  "cleanup": "exFAT image identity-verified, detached and removed; private reports retained"
+}

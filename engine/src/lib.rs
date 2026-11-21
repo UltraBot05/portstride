@@ -181,6 +181,7 @@ fn issue(code: &'static str, severity: &'static str, label: String, evidence: St
             "DEST_READ_ONLY" | "SOURCE_DEVICE_CHANGE" => "observed_property",
             "INSUFFICIENT_CAPACITY" => "estimate",
             "CAPABILITY_UNVERIFIED"
+            | "FILENAME_RESTRICTION_UNVERIFIED"
             | "SYMLINK_CAPABILITY_UNVERIFIED"
             | "SYMLINK_POLICY_UNRESOLVED" => "unknown",
             _ => "incompatibility",
@@ -314,12 +315,20 @@ pub fn inspect_with_paths(
             "No sources were selected.".into(),
         ));
     }
-    if capabilities.mount_read_only == Some(true) || capabilities.writable == Some(false) {
+    if capabilities.mount_read_only == Some(true) {
         scanner.issues.push(issue(
             "DEST_READ_ONLY",
             "blocker",
             "destination".into(),
-            "Destination mount or folder is not writable by this process.".into(),
+            "Destination mount is read-only.".into(),
+        ));
+    }
+    if capabilities.mount_read_only != Some(true) && capabilities.writable == Some(false) {
+        scanner.issues.push(issue(
+            "ACCESS_DENIED",
+            "blocker",
+            "destination".into(),
+            "The selected folder denied the effective access check at inspection time.".into(),
         ));
     }
     for (i, source) in sources.iter().enumerate() {
@@ -552,6 +561,26 @@ impl Scanner<'_> {
             anchored::identity(&metadata).0,
             &label,
         ) {
+            self.issues.push(finding);
+        }
+        if self
+            .capabilities
+            .filesystem
+            .as_deref()
+            .is_some_and(|fs| fs.eq_ignore_ascii_case("exfat") || fs.eq_ignore_ascii_case("msdos"))
+            && let Some(text) = name.to_str()
+            && (text.encode_utf16().count() > 255
+                || text.chars().any(|c| {
+                    c <= '\u{1f}' || matches!(c, '"' | '*' | ':' | '<' | '>' | '?' | '\\' | '|')
+                }))
+        {
+            let mut finding = issue(
+                "FILENAME_RESTRICTION_UNVERIFIED",
+                "warning",
+                label.clone(),
+                "This component conflicts with FAT-family on-disk filename rules; the mounted driver's name mapping and rejection behavior are unverified.".into(),
+            );
+            finding.confidence = "unknown";
             self.issues.push(finding);
         }
         let key = comparison_key(&relative, self.capabilities.case_sensitive);

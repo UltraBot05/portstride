@@ -171,3 +171,39 @@ fn human_output_does_not_imply_transfer_authorization() {
     assert!(text.contains("Transfer readiness: not assessed"));
     fs::remove_dir_all(root).unwrap();
 }
+
+#[cfg(target_os = "macos")]
+#[test]
+fn denied_destination_is_reported_in_json_without_exposing_paths() {
+    use std::os::unix::fs::PermissionsExt;
+    let root =
+        std::env::temp_dir().join(format!("portstride-cli-permission-{}", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let dest = root.join("destination");
+    fs::create_dir(&dest).unwrap();
+    fs::write(root.join("source"), b"hello").unwrap();
+    fs::set_permissions(&dest, fs::Permissions::from_mode(0o500)).unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_portstride"))
+        .args([
+            "inspect",
+            root.join("source").to_str().unwrap(),
+            "--destination",
+            dest.to_str().unwrap(),
+            "--json",
+        ])
+        .output()
+        .unwrap();
+    fs::set_permissions(&dest, fs::Permissions::from_mode(0o700)).unwrap();
+    let text = String::from_utf8(output.stdout).unwrap();
+    let report: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(report["destination"]["writable"], false);
+    assert!(
+        report["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|i| i["code"] == "ACCESS_DENIED")
+    );
+    assert!(!text.contains(root.to_str().unwrap()));
+    fs::remove_dir_all(root).unwrap();
+}
