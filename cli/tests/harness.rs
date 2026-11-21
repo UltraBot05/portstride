@@ -1,4 +1,7 @@
+#[path = "../../test-support/fixture.rs"]
+mod test_fixture;
 use std::{fs, process::Command};
+use test_fixture::fixture;
 
 fn harness(args: &[&str]) -> std::process::Output {
     Command::new(env!("CARGO_BIN_EXE_portstride-harness"))
@@ -9,11 +12,7 @@ fn harness(args: &[&str]) -> std::process::Output {
 
 #[test]
 fn generated_fixtures_are_reproducible_and_existing_roots_are_preserved() {
-    let root = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-harness-fixture-{}", std::process::id()));
-    fs::create_dir(&root).unwrap();
+    let root = fixture();
     let a = root.join("a");
     let b = root.join("b");
     for path in [&a, &b] {
@@ -36,16 +35,11 @@ fn generated_fixtures_are_reproducible_and_existing_roots_are_preserved() {
             .success()
     );
     assert_eq!(fs::metadata(a.join("file-00000000")).unwrap().len(), 1025);
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn benchmark_reports_each_complete_scan_and_rejects_missing_sources() {
-    let root = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-harness-bench-{}", std::process::id()));
-    fs::create_dir(&root).unwrap();
+    let root = fixture();
     let source = root.join("source");
     let dest = root.join("destination");
     fs::create_dir(&dest).unwrap();
@@ -90,15 +84,11 @@ fn benchmark_reports_each_complete_scan_and_rejects_missing_sources() {
     let failure: serde_json::Value = serde_json::from_slice(&failed.stdout).unwrap();
     assert_eq!(failure["status"], "incomplete");
     assert!(failure["failed_run"]["elapsed_ns"].is_number());
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn generator_rejects_unbounded_requests_before_creating_directory() {
-    let root = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-harness-limit-{}", std::process::id()));
+    let root = fixture().join("unbounded");
     let result = harness(&["generate", root.to_str().unwrap(), "1", "1073741824"]);
     assert!(!result.status.success());
     assert!(!root.exists());
@@ -106,11 +96,7 @@ fn generator_rejects_unbounded_requests_before_creating_directory() {
 
 #[test]
 fn scenario_fixtures_and_benchmark_statistics_are_reported() {
-    let root = std::env::temp_dir().canonicalize().unwrap().join(format!(
-        "portstride-harness-scenarios-{}",
-        std::process::id()
-    ));
-    fs::create_dir(&root).unwrap();
+    let root = fixture();
     for scenario in [
         "nested",
         "wide",
@@ -149,16 +135,11 @@ fn scenario_fixtures_and_benchmark_statistics_are_reported() {
     assert_eq!(report["runs"].as_array().unwrap().len(), 2);
     assert!(report["statistics"]["median_ns"].is_number());
     assert_eq!(report["cache_state"], "uncontrolled");
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn invalid_scenarios_and_symlinked_parents_are_rejected_before_creation() {
-    let root = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-harness-invalid-{}", std::process::id()));
-    fs::create_dir(&root).unwrap();
+    let root = fixture();
     let path = root.join("invalid");
     assert!(
         !harness(&["generate", path.to_str().unwrap(), "2", "16", "unknown"])
@@ -195,16 +176,11 @@ fn invalid_scenarios_and_symlinked_parents_are_rejected_before_creation() {
         );
         assert!(!root.join("actual/child/fixture").exists());
     }
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn edge_fixture_has_real_links_empty_directory_and_conflicting_names() {
-    let parent = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-edge-{}", std::process::id()));
-    fs::create_dir(&parent).unwrap();
+    let parent = fixture();
     let root = parent.join("fixture");
     let output = harness(&["generate", root.to_str().unwrap(), "2", "8", "edge"]);
     assert!(output.status.success());
@@ -228,12 +204,11 @@ fn edge_fixture_has_real_links_empty_directory_and_conflicting_names() {
         );
         assert!(!root.join("broken-link").exists());
     }
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[test]
 fn invalid_benchmark_parameters_and_missing_destination_are_rejected() {
-    let root = std::env::temp_dir().canonicalize().unwrap();
+    let root = fixture();
     assert!(
         !harness(&[
             "benchmark",
@@ -258,11 +233,7 @@ fn invalid_benchmark_parameters_and_missing_destination_are_rejected() {
 
 #[test]
 fn fat_simulation_reports_metadata_only_blocker() {
-    let parent = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-simulated-{}", std::process::id()));
-    fs::create_dir(&parent).unwrap();
+    let parent = fixture();
     let root = parent.join("fixture");
     let out = harness(&["generate", root.to_str().unwrap(), "1", "4", "simulated"]);
     assert!(out.status.success());
@@ -273,17 +244,13 @@ fn fat_simulation_reports_metadata_only_blocker() {
         "upper_bound"
     );
     assert_eq!(fs::metadata(root.join("file-00000000")).unwrap().len(), 4);
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[cfg(unix)]
 #[test]
 fn generator_rejects_shared_writable_parent_and_accounts_for_extra_files() {
     use std::os::unix::fs::PermissionsExt;
-    let root = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-unsafe-parent-{}", std::process::id()));
+    let root = fixture().join("shared-parent");
     fs::create_dir(&root).unwrap();
     fs::set_permissions(&root, fs::Permissions::from_mode(0o777)).unwrap();
     let target = root.join("fixture");
@@ -303,18 +270,13 @@ fn generator_rejects_shared_writable_parent_and_accounts_for_extra_files() {
     ]);
     assert!(!result.status.success());
     assert!(!target.exists());
-    fs::remove_dir(root).unwrap();
 }
 
 #[cfg(unix)]
 #[test]
 fn existing_real_or_symlink_output_is_never_modified() {
     use std::os::unix::fs::symlink;
-    let parent = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-existing-output-{}", std::process::id()));
-    fs::create_dir(&parent).unwrap();
+    let parent = fixture();
     let existing = parent.join("existing");
     fs::create_dir(&existing).unwrap();
     fs::write(existing.join("sentinel"), b"unchanged").unwrap();
@@ -326,16 +288,11 @@ fn existing_real_or_symlink_output_is_never_modified() {
     assert!(!result.status.success());
     assert_eq!(fs::read(existing.join("sentinel")).unwrap(), b"unchanged");
     assert_eq!(fs::read_dir(&existing).unwrap().count(), 1);
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[test]
 fn fixture_layouts_match_reported_logical_limits() {
-    let parent = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-layout-{}", std::process::id()));
-    fs::create_dir(&parent).unwrap();
+    let parent = fixture();
     for scenario in ["flat", "nested", "wide", "edge"] {
         let root = parent.join(scenario);
         let output = harness(&["generate", root.to_str().unwrap(), "7", "11", scenario]);
@@ -391,16 +348,11 @@ fn fixture_layouts_match_reported_logical_limits() {
             }
         }
     }
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[test]
 fn benchmark_statistics_match_measured_runs_only() {
-    let parent = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-stats-{}", std::process::id()));
-    fs::create_dir(&parent).unwrap();
+    let parent = fixture();
     let source = parent.join("source");
     assert!(
         harness(&["generate", source.to_str().unwrap(), "2", "4"])
@@ -443,16 +395,11 @@ fn benchmark_statistics_match_measured_runs_only() {
         let text = String::from_utf8(output.stdout).unwrap().to_lowercase();
         assert!(!text.contains("throughput"));
     }
-    fs::remove_dir_all(parent).unwrap();
 }
 
 #[test]
 fn generator_failure_has_structured_error() {
-    let root = std::env::temp_dir()
-        .canonicalize()
-        .unwrap()
-        .join(format!("portstride-error-{}", std::process::id()));
-    fs::create_dir(&root).unwrap();
+    let root = fixture();
     let output = harness(&["generate", root.to_str().unwrap(), "1", "1"]);
     assert!(!output.status.success());
     let failure: serde_json::Value = serde_json::from_slice(&output.stderr).unwrap();
@@ -460,5 +407,4 @@ fn generator_failure_has_structured_error() {
     assert_eq!(failure["kind"], "fixture_generation");
     assert_eq!(failure["status"], "incomplete");
     assert!(failure["error"].as_str().unwrap().contains("Cannot create"));
-    fs::remove_dir(root).unwrap();
 }

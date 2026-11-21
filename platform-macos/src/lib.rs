@@ -117,3 +117,8 @@ mod tests {
         assert_eq!(super::folder_access_denied(libc::EIO), None);
     }
 }
+
+// The restricted executor is reserved for a future authorized in-process caller.
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+mod copy_transaction;

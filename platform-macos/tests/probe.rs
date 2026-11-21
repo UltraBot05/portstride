@@ -1,3 +1,6 @@
+#[cfg(target_os = "macos")]
+#[path = "../../test-support/fixture.rs"]
+mod test_fixture;
 #[test]
 fn probes_existing_directory_without_writing() {
     let caps = portstride_platform_macos::probe(std::path::Path::new("/"));
@@ -24,11 +27,7 @@ fn observes_permissions_on_selected_directory() {
         os::unix::fs::{MetadataExt, PermissionsExt},
     };
 
-    let path = std::env::temp_dir().join(format!(
-        "portstride-probe-permissions-{}",
-        std::process::id()
-    ));
-    fs::create_dir(&path).unwrap();
+    let path = test_fixture::fixture();
     fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
     let metadata = fs::metadata(&path).unwrap();
     let allowed = portstride_platform_macos::probe(&path);
@@ -41,7 +40,6 @@ fn observes_permissions_on_selected_directory() {
     fs::set_permissions(&path, fs::Permissions::from_mode(0o500)).unwrap();
     let denied = portstride_platform_macos::probe(&path);
     fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
-    fs::remove_dir(&path).unwrap();
     assert_eq!(denied.probe_identity, allowed.probe_identity);
     assert_eq!(denied.writable, Some(false));
 }

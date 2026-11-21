@@ -1,15 +1,9 @@
 use portstride_engine::{Capabilities, inspect};
-use std::{fs, path::PathBuf};
+use std::fs;
 
-fn fixture() -> PathBuf {
-    let p = std::env::temp_dir().join(format!(
-        "portstride-test-{}-{:?}",
-        std::process::id(),
-        std::thread::current().id()
-    ));
-    fs::create_dir_all(&p).unwrap();
-    p
-}
+#[path = "../../test-support/fixture.rs"]
+mod test_fixture;
+use test_fixture::fixture;
 
 #[cfg(unix)]
 fn bound_capabilities(destination: &std::path::Path) -> Capabilities {
@@ -37,7 +31,6 @@ fn nested_sources_are_counted_without_following_links() {
     assert!(report.inventory.complete);
     #[cfg(unix)]
     assert_eq!(report.inventory.symlinks, 1);
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -46,7 +39,6 @@ fn missing_source_is_incomplete_and_blocked() {
     let report = inspect(&[root.join("missing")], &root, Capabilities::unknown());
     assert!(!report.inventory.complete);
     assert!(report.issues.iter().any(|i| i.severity == "blocker"));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -76,7 +68,6 @@ fn nested_destination_and_readonly_are_blocked() {
     let report = inspect(std::slice::from_ref(&root), &dest, caps);
     assert!(report.issues.iter().any(|i| i.code == "ACCESS_DENIED"));
     assert!(report.issues.iter().any(|i| i.code == "PATH_UNSUPPORTED"));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -103,7 +94,6 @@ fn multiple_sources_capacity_and_name_collision_are_reported() {
             .iter()
             .any(|i| i.code == "CASE_NAME_COLLISION")
     );
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -127,7 +117,6 @@ fn distinct_case_names_collide_on_case_insensitive_destination() {
         .find(|i| i.code == "CASE_NAME_COLLISION")
         .unwrap();
     assert_eq!(collision.affected_paths.len(), 2);
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -184,7 +173,6 @@ fn mismatched_probe_volume_does_not_drive_capacity_or_readonly_findings() {
             .any(|i| i.code == "DEST_READ_ONLY" || i.code == "INSUFFICIENT_CAPACITY")
     );
     assert!(report.destination.volume_id.is_none());
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -215,7 +203,6 @@ fn destination_entry_symlink_is_a_conflict_without_descendant_traversal() {
             .any(|i| i.code == "PATH_UNSUPPORTED" && i.severity == "blocker")
     );
     assert_eq!(report.inventory.files, 0);
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -234,7 +221,6 @@ fn unopened_destination_discards_unbound_probe_results() {
             .iter()
             .any(|i| i.code == "DEST_READ_ONLY" || i.code == "INSUFFICIENT_CAPACITY")
     );
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -269,7 +255,6 @@ fn complete_inspection_allows_unknown_optional_capabilities() {
             .iter()
             .any(|i| i.code == "METADATA_UNSUPPORTED")
     );
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -284,7 +269,6 @@ fn missing_required_probe_is_incomplete() {
     );
     assert!(!report.inspection_complete);
     assert_eq!(report.status, "incomplete");
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -322,7 +306,6 @@ fn unclassified_file_limit_does_not_create_a_blocker() {
             .iter()
             .any(|i| i.category == "inspection_failure")
     );
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -352,7 +335,6 @@ fn verified_symlink_support_does_not_report_it_as_unknown() {
             .iter()
             .any(|i| i.code == "SYMLINK_POLICY_UNRESOLVED")
     );
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -371,7 +353,6 @@ fn ascii_names_collide_under_non_ascii_parent_with_simulated_case_insensitivity(
     let report = inspect(&[root.join("one/é"), root.join("two/é")], &dest, caps);
     assert!(report.issues.iter().any(|i| i.code == "CASE_NAME_COLLISION"
         && i.affected_paths.iter().all(|p| p.contains("/entry["))));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -390,7 +371,6 @@ fn generic_uncertainty_does_not_recommend_changing_destination() {
             .iter()
             .any(|r| r.action == "choose_destination")
     );
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -415,7 +395,6 @@ fn fat_family_forbidden_component_is_reported_as_driver_dependent() {
                     && i.affected_paths == ["source[1]/entry[1]"])
         );
     }
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -444,7 +423,6 @@ fn fat_name_warning_does_not_apply_windows_reserved_names_or_other_filesystems()
             "{filesystem} {name}"
         );
     }
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -500,7 +478,6 @@ fn windows_portability_risks_are_scoped_to_fat_family() {
             "{name}"
         );
     }
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -530,7 +507,6 @@ fn simulated_folder_access_and_mount_state_have_distinct_diagnostics() {
             None => assert!(access.is_empty()),
         }
     }
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(unix)]
@@ -556,5 +532,4 @@ fn windows_portability_warning_serializes_without_paths_or_blocking() {
             .any(|i| i["code"] == "WINDOWS_FILENAME_PORTABILITY" && i["severity"] == "warning")
     );
     assert!(!text.contains(root.to_str().unwrap()));
-    fs::remove_dir_all(root).unwrap();
 }

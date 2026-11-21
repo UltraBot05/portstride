@@ -470,7 +470,12 @@ fn benchmark_with_writer(
 }
 
 #[cfg(all(test, unix))]
+#[path = "../../../test-support/fixture.rs"]
+mod test_fixture;
+
+#[cfg(all(test, unix))]
 mod tests {
+    use super::test_fixture::fixture;
     use super::*;
     use std::cell::RefCell;
 
@@ -486,11 +491,7 @@ mod tests {
 
     #[test]
     fn partial_failure_preserves_unrelated_data() {
-        let parent = std::env::temp_dir()
-            .canonicalize()
-            .unwrap()
-            .join(format!("portstride-partial-unit-{}", std::process::id()));
-        std::fs::create_dir(&parent).unwrap();
+        let parent = fixture();
         std::fs::write(parent.join("sentinel"), b"untouched").unwrap();
         TEST_HOOK.with(|hook| {
             *hook.borrow_mut() = Some(Box::new(|stage| {
@@ -518,16 +519,11 @@ mod tests {
             4
         );
         assert!(!parent.join("fixture/file-00000001").exists());
-        std::fs::remove_dir_all(parent).unwrap();
     }
 
     #[test]
     fn substitution_by_private_directory_is_not_detected() {
-        let parent = std::env::temp_dir().canonicalize().unwrap().join(format!(
-            "portstride-substitution-unit-{}",
-            std::process::id()
-        ));
-        std::fs::create_dir(&parent).unwrap();
+        let parent = fixture();
         std::fs::create_dir(parent.join("replacement")).unwrap();
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(
@@ -562,23 +558,21 @@ mod tests {
             std::fs::read_dir(parent.join("fixture")).unwrap().count(),
             1
         );
-        std::fs::remove_dir_all(parent).unwrap();
     }
     #[test]
     fn failed_inspection_retains_prior_measurements() {
-        let parent = std::env::temp_dir().canonicalize().unwrap().join(format!(
-            "portstride-bench-failure-unit-{}",
-            std::process::id()
-        ));
-        std::fs::create_dir(&parent).unwrap();
+        let parent = fixture();
         let source = parent.join("source");
         std::fs::create_dir(&source).unwrap();
         TEST_PARENT.with(|p| *p.borrow_mut() = Some(source.clone()));
         TEST_HOOK.with(|hook| {
             *hook.borrow_mut() = Some(Box::new(|stage| {
                 if stage == "scan-2" {
-                    TEST_PARENT
-                        .with(|p| std::fs::remove_dir(p.borrow().as_ref().unwrap()).unwrap());
+                    TEST_PARENT.with(|p| {
+                        let source = p.borrow();
+                        let source = source.as_ref().unwrap();
+                        std::fs::rename(source, source.with_file_name("renamed-source")).unwrap();
+                    });
                 }
                 Ok(())
             }))
@@ -591,6 +585,5 @@ mod tests {
         assert_eq!(report["warmups"].as_array().unwrap().len(), 1);
         assert_eq!(report["runs"].as_array().unwrap().len(), 1);
         assert!(report["failed_run"]["elapsed_ns"].is_number());
-        std::fs::remove_dir(parent).unwrap();
     }
 }

@@ -1,0 +1,35 @@
+# M1.1 fixture lifecycle: review design
+
+Status: the macOS fixture lifecycle and the legacy workspace fixture migration have been reviewed under the trusted-parent assumptions below. The workspace regression suite passed 114 tests. M1.1 is accepted for the controlled single-file scope; historical artifacts are outside this design and must not be removed under it.
+
+## Scope and assumptions
+
+A fresh test run creates a random root under an explicitly selected, already-open private parent. Each test creates a separate random child and holds its parent and root descriptors for its lifetime. The selected parent and every ancestor, including ACLs, must be trusted against concurrent entry modification, rename and mount substitution. A same-user adversary, privileged actor, hostile filesystem or concurrent mount replacement is outside this experiment. Ownership and restrictive mode bits are checks, not proof of these assumptions. Arbitrary user-selected directories are not authorized by this mechanism.
+
+The descriptor is an identity anchor, not authorization. A private test capability must bind the held parent and root identities, test ID and permitted operations. The executor receives an explicitly scoped capability, not a caller-provided trust boolean. Source identity, directory identity, staging identity and destination name are distinct facts. No public constructor may convert an arbitrary path or descriptor into this test capability.
+
+## Creation and records
+
+Create each root exclusively with an unpredictable identifier and mode 0700. Immediately open it without following symlinks and compare its descriptor identity to the no-follow entry in the held parent. This comparison cannot prove the newly created entry was not substituted before its first observation; the trusted-parent assumption remains necessary. If any step fails, do not infer ownership or clean up an entry. No write test proceeds until the root, parent and private manifest have been verified.
+
+The harness creates a manifest exclusively within the held root. The `.json` file contains newline-delimited JSON records, not one JSON document. Record a format version, run and test identifiers, parent and root device/inode identities, and each created entry's relative single-component name, type and descriptor-derived device/inode identity. Record source and staging identities at creation, and record the staging-to-final transition only after a known successful commit. Retain the descriptors where practical. The manifest must not contain personal absolute paths and must not be published. An on-disk record is evidence, not by itself proof of ownership or a license to delete after restart; it can itself be replaced or forged. An interrupted setup may leave an unmanifested root or an incomplete record. Preserve it for manual investigation; never scan or remove it automatically.
+
+Each test-created entry must be registered at creation. Tests that intentionally substitute, rename or create unrelated entries must keep explicit identities for what they create and must not register a later path observation as evidence of ownership. Unexpected entries, changed identities, symlinks, inaccessible evidence, ambiguous commits and incomplete records make that fixture ineligible for cleanup. A failure may leave the fixture in place with its manifest. A ledger write failure also prevents automatic cleanup.
+
+## Cleanup gate
+
+Cleanup is explicit, never recursive and never based on a glob or fixture-looking name. Using held descriptors, first verify the parent-to-root binding, the root identity and the complete set of root entries against the creation ledger; any unexpected or changed entry rejects the whole cleanup before deletion. For each known regular file, recheck its no-follow entry identity against its retained identity immediately before descriptor-relative unlink. Remove the manifest only after all other known entries have been removed and its own identity checked. Verify the root is empty and still bound to the held parent before removing it with descriptor-relative directory removal. Never follow or traverse a symlink. Never remove an unrecorded object, including a renamed or substituted object. On any error, stop and preserve what remains; partial cleanup may have already removed verified entries and must be reported.
+
+The identity-check/unlink sequence is not atomic against a directory writer, and an open descriptor does not pin a name or mount. This cleanup is therefore valid only under the stated trusted-directory and no-concurrent-modification assumptions, not against same-user interference. Recovery after process termination requires an independent, explicitly approved inventory and identity/ownership assessment; no automatic recovery or historical cleanup follows from this design.
+
+## Review and test gate
+
+Independent review must inspect the implementation, entry-creation and mutation paths, and failure handling before write-capable tests run. Tests must show cleanup rejects an unrelated entry and an identity change without removing either, as well as successful cleanup of a known fresh fixture. A private temporary parent alone does not establish ownership for predictable paths. Keep prior test data, incident artifacts and unidentified staging entries untouched.
+
+## Current implementation and evidence
+
+The retained source and manifest descriptors support cleanup of an untouched fixture. A test-only transaction observer records and retains the staging descriptor before copying and records a known successful rename before cleanup becomes eligible. A ledger write failure, a failed or ambiguous copy, and tests that call the transaction directly leave cleanup ineligible. The implementation does not yet register arbitrary test mutations or automatically clean failed transactions. The three focused cleanup tests and the 38-test copy-fixture module passed in fresh private temporary parents; the successful copy test independently compared source and destination SHA-256 using the system utility, compared bytes, and passed identity-checked cleanup. These tests do not establish correctness against a concurrent directory writer or on other filesystems.
+
+The legacy engine, CLI, harness, and macOS probe tests now use fresh random private fixture roots. They retain their contents rather than recursively deleting them. Independent review cleared the migrated fixtures under the trusted-parent assumptions, and the workspace suite passed 114 tests, including the focused unknown-access test. The fixture now exercises the production-compiled internal authorization provider. The fixture review does not establish user intent or trusted directories for other callers.
+
+During this work, an accidental empty append redirection opened a fixed pathname in the shared temporary directory. Its prior existence and identity were not recorded, so it may have created an empty file. It was not inspected, modified further, or removed; it is outside the fixture lifecycle and requires independent assessment before any cleanup.

@@ -67,11 +67,59 @@ pub fn names(fd: &OwnedFd) -> io::Result<Vec<OsString>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs, os::unix::fs::symlink};
+    use std::{fs, io::Write, os::unix::fs::symlink};
+
+    // Test artifacts are deliberately retained: their entries are not ledgered for cleanup.
+    fn fixture() -> std::path::PathBuf {
+        use rustix::fs::{self as rfs, AtFlags, Mode, OFlags};
+        let parent_path = std::env::temp_dir().canonicalize().unwrap();
+        let flags = OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC;
+        let parent = rfs::open(&parent_path, flags, Mode::empty()).unwrap();
+        let parent_identity = rfs::fstat(&parent).unwrap();
+        assert_eq!(parent_identity.st_uid, rustix::process::geteuid().as_raw());
+        assert_eq!(
+            parent_identity.st_mode & 0o077,
+            0,
+            "temporary parent must be private"
+        );
+        let mut nonce = [0u8; 16];
+        getrandom::getrandom(&mut nonce).unwrap();
+        let id: String = nonce.iter().map(|byte| format!("{byte:02x}")).collect();
+        let name = format!("portstride-anchored-{id}");
+        rfs::mkdirat(&parent, name.as_str(), Mode::from_bits_truncate(0o700)).unwrap();
+        let named = rfs::statat(&parent, name.as_str(), AtFlags::SYMLINK_NOFOLLOW).unwrap();
+        let dir = rfs::openat(&parent, name.as_str(), flags, Mode::empty()).unwrap();
+        let held = rfs::fstat(&dir).unwrap();
+        assert_eq!((named.st_dev, named.st_ino), (held.st_dev, held.st_ino));
+        let mut manifest = fs::File::from(
+            rfs::openat(
+                &dir,
+                "manifest.json",
+                OFlags::WRONLY | OFlags::CREATE | OFlags::EXCL | OFlags::NOFOLLOW | OFlags::CLOEXEC,
+                Mode::from_bits_truncate(0o600),
+            )
+            .unwrap(),
+        );
+        let manifest_identity = rfs::fstat(&manifest).unwrap();
+        writeln!(
+            manifest,
+            "{}",
+            serde_json::json!({
+                "version": 1, "id": id,
+                "parent": [parent_identity.st_dev as u64, parent_identity.st_ino],
+                "root": [held.st_dev as u64, held.st_ino],
+                "manifest": [manifest_identity.st_dev as u64, manifest_identity.st_ino],
+                "cleanup": "manual review required"
+            })
+        )
+        .unwrap();
+        manifest.sync_all().unwrap();
+        parent_path.join(name)
+    }
 
     #[test]
     fn replacing_directory_with_symlink_cannot_redirect_open() {
-        let root = std::env::temp_dir().join(format!("portstride-race-{}", std::process::id()));
+        let root = fixture();
         fs::create_dir_all(root.join("parent/child")).unwrap();
         fs::create_dir_all(root.join("outside")).unwrap();
         fs::write(root.join("outside/secret"), b"secret").unwrap();
@@ -80,23 +128,21 @@ mod tests {
         fs::rename(root.join("parent/child"), root.join("moved")).unwrap();
         symlink(root.join("outside"), root.join("parent/child")).unwrap();
         assert!(open_verified_directory(&parent, std::ffi::OsStr::new("child"), &before).is_err());
-        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
     fn replaced_directory_identity_is_rejected() {
-        let root = std::env::temp_dir().join(format!("portstride-replace-{}", std::process::id()));
+        let root = fixture();
         fs::create_dir_all(root.join("parent/child")).unwrap();
         let parent = open_directory(&root.join("parent")).unwrap();
         let before = stat_child(&parent, std::ffi::OsStr::new("child")).unwrap();
         fs::rename(root.join("parent/child"), root.join("old")).unwrap();
         fs::create_dir(root.join("parent/child")).unwrap();
         assert!(open_verified_directory(&parent, std::ffi::OsStr::new("child"), &before).is_err());
-        fs::remove_dir_all(root).unwrap();
     }
     #[test]
     fn renamed_open_directory_stays_anchored() {
-        let root = std::env::temp_dir().join(format!("portstride-rename-{}", std::process::id()));
+        let root = fixture();
         fs::create_dir_all(root.join("parent/child")).unwrap();
         fs::write(root.join("parent/child/original"), b"a").unwrap();
         let parent = open_directory(&root.join("parent")).unwrap();
@@ -110,28 +156,24 @@ mod tests {
             identity(&stat_child(&parent, OsStr::new("child")).unwrap()),
             identity(&before)
         );
-        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
     fn deleted_entry_reports_an_error() {
-        let root = std::env::temp_dir().join(format!("portstride-deleted-{}", std::process::id()));
+        let root = fixture();
         fs::create_dir_all(root.join("parent/child")).unwrap();
         let parent = open_directory(&root.join("parent")).unwrap();
         let before = stat_child(&parent, OsStr::new("child")).unwrap();
         fs::remove_dir(root.join("parent/child")).unwrap();
         assert!(open_verified_directory(&parent, OsStr::new("child"), &before).is_err());
-        fs::remove_dir_all(root).unwrap();
     }
     #[test]
     fn replacing_destination_path_is_detected() {
-        let root =
-            std::env::temp_dir().join(format!("portstride-destination-{}", std::process::id()));
+        let root = fixture();
         fs::create_dir_all(root.join("destination")).unwrap();
         let destination = open_directory(&root.join("destination")).unwrap();
         fs::rename(root.join("destination"), root.join("old")).unwrap();
         fs::create_dir(root.join("destination")).unwrap();
         assert!(!path_still_identifies(&root.join("destination"), &destination).unwrap());
-        fs::remove_dir_all(root).unwrap();
     }
 }

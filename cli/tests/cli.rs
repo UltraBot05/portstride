@@ -1,7 +1,10 @@
+#[path = "../../test-support/fixture.rs"]
+mod test_fixture;
 use std::{fs, process::Command};
+use test_fixture::fixture;
 #[test]
 fn json_report_is_versioned_and_redacts_paths() {
-    let root = std::env::temp_dir().join(format!("portstride-cli-test-{}", std::process::id()));
+    let root = fixture();
     fs::create_dir_all(root.join("destination")).unwrap();
     fs::write(root.join("secret-name"), b"hello").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_portstride"))
@@ -19,13 +22,11 @@ fn json_report_is_versioned_and_redacts_paths() {
     assert_eq!(report["api_version"], 3);
     assert_eq!(report["inventory"]["logical_bytes"], 5);
     assert!(!text.contains("secret-name"));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn explicit_path_display_identifies_nested_findings() {
-    let root =
-        std::env::temp_dir().join(format!("portstride-cli-path-test-{}", std::process::id()));
+    let root = fixture();
     fs::create_dir_all(root.join("source")).unwrap();
     fs::create_dir_all(root.join("dest")).unwrap();
     #[cfg(unix)]
@@ -44,12 +45,11 @@ fn explicit_path_display_identifies_nested_findings() {
     let text = String::from_utf8(output.stdout).unwrap();
     #[cfg(unix)]
     assert!(text.contains("identifiable-link"));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn observed_inspection_reports_readiness_separately() {
-    let root = std::env::temp_dir().join(format!("portstride-cli-status-{}", std::process::id()));
+    let root = fixture();
     fs::create_dir_all(root.join("dest")).unwrap();
     fs::write(root.join("source"), b"data").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_portstride"))
@@ -75,13 +75,11 @@ fn observed_inspection_reports_readiness_separately() {
     }
     assert_eq!(report["api_version"], 3);
     assert_eq!(report["transfer_readiness"], "not_assessed");
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
 fn incomplete_and_invalid_invocation_have_distinct_exits() {
-    let root =
-        std::env::temp_dir().join(format!("portstride-cli-incomplete-{}", std::process::id()));
+    let root = fixture();
     fs::create_dir_all(root.join("dest")).unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_portstride"))
         .args([
@@ -102,13 +100,12 @@ fn incomplete_and_invalid_invocation_have_distinct_exits() {
         .output()
         .unwrap();
     assert_eq!(invalid.status.code(), Some(2));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(target_os = "macos")]
 #[test]
 fn completed_inspection_with_conflict_returns_blocked() {
-    let root = std::env::temp_dir().join(format!("portstride-cli-blocked-{}", std::process::id()));
+    let root = fixture();
     fs::create_dir_all(root.join("dest")).unwrap();
     fs::write(root.join("source"), b"a").unwrap();
     fs::write(root.join("dest/source"), b"b").unwrap();
@@ -127,7 +124,6 @@ fn completed_inspection_with_conflict_returns_blocked() {
     assert_eq!(report["status"], "blocked");
     assert_eq!(report["inspection_complete"], true);
     assert_eq!(report["transfer_readiness"], "not_assessed");
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[test]
@@ -155,7 +151,7 @@ fn representative_v3_fixtures_cover_statuses() {
 
 #[test]
 fn human_output_does_not_imply_transfer_authorization() {
-    let root = std::env::temp_dir().join(format!("portstride-cli-human-{}", std::process::id()));
+    let root = fixture();
     fs::create_dir_all(root.join("dest")).unwrap();
     fs::write(root.join("source"), b"a").unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_portstride"))
@@ -169,16 +165,13 @@ fn human_output_does_not_imply_transfer_authorization() {
         .unwrap();
     let text = String::from_utf8(output.stdout).unwrap();
     assert!(text.contains("Transfer readiness: not assessed"));
-    fs::remove_dir_all(root).unwrap();
 }
 
 #[cfg(target_os = "macos")]
 #[test]
 fn denied_destination_is_reported_in_json_without_exposing_paths() {
     use std::os::unix::fs::PermissionsExt;
-    let root =
-        std::env::temp_dir().join(format!("portstride-cli-permission-{}", std::process::id()));
-    fs::create_dir(&root).unwrap();
+    let root = fixture();
     let dest = root.join("destination");
     fs::create_dir(&dest).unwrap();
     fs::write(root.join("source"), b"hello").unwrap();
@@ -205,5 +198,4 @@ fn denied_destination_is_reported_in_json_without_exposing_paths() {
             .any(|i| i["code"] == "ACCESS_DENIED")
     );
     assert!(!text.contains(root.to_str().unwrap()));
-    fs::remove_dir_all(root).unwrap();
 }
