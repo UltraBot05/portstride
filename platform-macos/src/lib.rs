@@ -122,3 +122,10 @@ mod tests {
 #[cfg(target_os = "macos")]
 #[allow(dead_code)]
 mod copy_transaction;
+
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+mod copy_orchestrator;
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+mod job_plan;

@@ -316,7 +316,7 @@ pub(super) fn copy(
     copy_with_hook(&request, policy, cancel, &mut |_, _| Ok(()))
 }
 
-fn copy_with_hook(
+pub(super) fn copy_with_hook(
     request: &Request<'_>,
     policy: MetadataPolicy,
     cancel: &std::sync::atomic::AtomicBool,
