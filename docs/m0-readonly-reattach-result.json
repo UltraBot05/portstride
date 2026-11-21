@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "scope": "APFS read-only mount and reattach; no transfer",
+  "environment": {
+    "os": "macOS 27.2.1",
+    "build": "26B131",
+    "architecture": "arm64"
+  },
+  "case": "apfs_read_only_detach_reattach",
+  "evidence": "real disposable image",
+  "status": "pass",
+  "expected": "read-only mount blocker before and after reattach; no transfer readiness",
+  "before": {
+    "exit_code": 1,
+    "mount_read_only": true,
+    "probe_identity": [
+      16777241,
+      2
+    ],
+    "codes": [
+      "DEST_READ_ONLY",
+      "CAPABILITY_UNVERIFIED"
+    ],
+    "transfer_readiness": "not_assessed"
+  },
+  "after": {
+    "exit_code": 1,
+    "mount_read_only": true,
+    "probe_identity": [
+      16777241,
+      2
+    ],
+    "codes": [
+      "DEST_READ_ONLY",
+      "CAPABILITY_UNVERIFIED"
+    ],
+    "transfer_readiness": "not_assessed"
+  },
+  "identity_note": "Identity happened to remain equal in this run; it is not durable or transfer authorization. Old descriptor use was not tested.",
+  "cleanup": "detached_image_removed_reports_retained"
+}

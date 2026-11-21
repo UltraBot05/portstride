@@ -66,5 +66,14 @@
     "evidence": "m06c-exfat-results.json",
     "root_cause": "12-character prior volume name exceeded documented 11-character limit; shorter name succeeded, suggesting but not proving cause",
     "cleanup": "image identity verified, detached and removed; private manifests, logs, reports and tiny source fixtures retained"
+  },
+  "m0_read_only_reattach": {
+    "evidence": "real disposable APFS image",
+    "status": "pass",
+    "mount_read_only_before": true,
+    "mount_read_only_after": true,
+    "identity": "same device/inode in this run; not durable",
+    "report": "m0-readonly-reattach-result.json",
+    "cleanup": "verified image detached and removed; private evidence retained"
   }
 }
