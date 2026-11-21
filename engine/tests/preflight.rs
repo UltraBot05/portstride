@@ -449,6 +449,62 @@ fn fat_name_warning_does_not_apply_windows_reserved_names_or_other_filesystems()
 
 #[cfg(unix)]
 #[test]
+fn windows_portability_risks_are_scoped_to_fat_family() {
+    let root = fixture();
+    let dest = root.join("dest");
+    fs::create_dir_all(&dest).unwrap();
+    for name in [
+        "CON", "con.txt", "COM1.log", "LPT9", "a:b", "trail.", "trail ",
+    ] {
+        fs::write(root.join(name), b"data").unwrap();
+        for filesystem in ["exfat", "msdos", "apfs"] {
+            let mut caps = bound_capabilities(&dest);
+            caps.filesystem = Some(filesystem.into());
+            let report = inspect(&[root.join(name)], &dest, caps);
+            if filesystem == "apfs" {
+                assert!(
+                    !report
+                        .issues
+                        .iter()
+                        .any(|i| i.code == "WINDOWS_FILENAME_PORTABILITY"),
+                    "{name}"
+                );
+                continue;
+            }
+            assert!(
+                report
+                    .issues
+                    .iter()
+                    .any(|i| i.code == "WINDOWS_FILENAME_PORTABILITY"
+                        && i.severity == "warning"
+                        && i.category == "unknown"
+                        && i.confidence == "unknown"),
+                "{name}"
+            );
+            assert!(
+                !report.issues.iter().any(|i| i.severity == "blocker"),
+                "{name}"
+            );
+        }
+    }
+    for name in ["console.txt", "COM10", "normal.txt"] {
+        fs::write(root.join(name), b"data").unwrap();
+        let mut caps = bound_capabilities(&dest);
+        caps.filesystem = Some("exfat".into());
+        let report = inspect(&[root.join(name)], &dest, caps);
+        assert!(
+            !report
+                .issues
+                .iter()
+                .any(|i| i.code == "WINDOWS_FILENAME_PORTABILITY"),
+            "{name}"
+        );
+    }
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
 fn simulated_folder_access_and_mount_state_have_distinct_diagnostics() {
     let root = fixture();
     let dest = root.join("dest");
@@ -474,5 +530,31 @@ fn simulated_folder_access_and_mount_state_have_distinct_diagnostics() {
             None => assert!(access.is_empty()),
         }
     }
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(unix)]
+#[test]
+fn windows_portability_warning_serializes_without_paths_or_blocking() {
+    let root = fixture();
+    let dest = root.join("dest");
+    fs::create_dir_all(&dest).unwrap();
+    fs::write(root.join("CON"), b"data").unwrap();
+    let mut caps = bound_capabilities(&dest);
+    caps.filesystem = Some("exfat".into());
+    caps.available_bytes = Some(1000);
+    caps.mount_read_only = Some(false);
+    let report = inspect(&[root.join("CON")], &dest, caps);
+    let text = serde_json::to_string(&report).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(json["status"], "complete");
+    assert!(
+        json["issues"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|i| i["code"] == "WINDOWS_FILENAME_PORTABILITY" && i["severity"] == "warning")
+    );
+    assert!(!text.contains(root.to_str().unwrap()));
     fs::remove_dir_all(root).unwrap();
 }

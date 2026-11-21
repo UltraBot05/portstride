@@ -83,5 +83,12 @@
     "limitations": "FAT-family on-disk restriction matches are warnings; mounted-driver mapping and untested FAT32/APFS case-sensitive cases remain unverified",
     "evidence": "m0-filename-permission-evidence.json",
     "cleanup": "test image verified detached and removed; private reports retained"
+  },
+  "m0_final_names": {
+    "environment": "macOS 27.2.1 (26B131), arm64",
+    "evidence": "real disposable FAT32 and both APFS case variants",
+    "details": "m0-final-name-observations.json",
+    "scope": "tested names only; no Windows portability or universal normalization inferred",
+    "cleanup": "three test images verified detached and removed; private evidence retained"
   }
 }

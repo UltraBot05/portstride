@@ -1,0 +1,473 @@
+{
+  "schema_version": 1,
+  "environment": {
+    "os": "macOS 27.2.1",
+    "build": "26B131",
+    "architecture": "arm64"
+  },
+  "evidence": "real disposable image; fixture creation and enumeration, followed by read-only preflight",
+  "note": "Names are synthetic; no file transfer performed. Observations do not establish Windows portability or all filesystem behavior. Diagnostics were captured from published d7662bd before any subsequent portability changes; a warning does not predict rejection.",
+  "filesystems": [
+    {
+      "filesystem": "FAT32",
+      "cases": [
+        {
+          "submitted": "plain.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._plain.txt",
+            "plain.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [],
+          "interpretation": "no name-specific finding; portability not assessed",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "colon:name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._colon:name",
+            "colon:name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "FILENAME_RESTRICTION_UNVERIFIED",
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [
+            "warning"
+          ],
+          "interpretation": "unknown warning consistent with successful driver mapping; not proof of portability",
+          "relationship_to_prediction": "supports_qualified_warning"
+        },
+        {
+          "submitted": "quest?name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._quest?name",
+            "quest?name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "FILENAME_RESTRICTION_UNVERIFIED",
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [
+            "warning"
+          ],
+          "interpretation": "unknown warning consistent with successful driver mapping; not proof of portability",
+          "relationship_to_prediction": "supports_qualified_warning"
+        },
+        {
+          "submitted": "star*name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._star*name",
+            "star*name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "FILENAME_RESTRICTION_UNVERIFIED",
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [
+            "warning"
+          ],
+          "interpretation": "unknown warning consistent with successful driver mapping; not proof of portability",
+          "relationship_to_prediction": "supports_qualified_warning"
+        },
+        {
+          "submitted": "pipe|name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._pipe|name",
+            "pipe|name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "FILENAME_RESTRICTION_UNVERIFIED",
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [
+            "warning"
+          ],
+          "interpretation": "unknown warning consistent with successful driver mapping; not proof of portability",
+          "relationship_to_prediction": "supports_qualified_warning"
+        },
+        {
+          "submitted": "CON",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._CON",
+            "CON"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [],
+          "interpretation": "no name-specific finding; portability not assessed",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "trail.",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._trail.",
+            "trail."
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [],
+          "interpretation": "no name-specific finding; portability not assessed",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "trail ",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._trail ",
+            "trail "
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [],
+          "interpretation": "no name-specific finding; portability not assessed",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "é.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "._é.txt",
+            "é.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "predicted_severity": [],
+          "interpretation": "no name-specific finding; portability not assessed",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        }
+      ]
+    },
+    {
+      "filesystem": "APFS case-sensitive",
+      "cases": [
+        {
+          "submitted": "plain.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "plain.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "colon:name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "colon:name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "quest?name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "quest?name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "CON",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "CON"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "trail.",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "trail."
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "trail ",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "trail "
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "é.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "é.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "A.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "A.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "a.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "a.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": true,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        }
+      ]
+    },
+    {
+      "filesystem": "APFS case-insensitive",
+      "cases": [
+        {
+          "submitted": "plain.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "plain.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "colon:name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "colon:name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "quest?name",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "quest?name"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "CON",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "CON"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "trail.",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "trail."
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "trail ",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "trail "
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "é.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "é.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "A.txt",
+          "created": true,
+          "errno": null,
+          "enumerated_new_names": [
+            "A.txt"
+          ],
+          "lookup_submitted": true,
+          "preflight_exit": 0,
+          "diagnostics": [
+            "CAPABILITY_UNVERIFIED"
+          ],
+          "case_sensitive": false,
+          "interpretation": "creation accepted; no destination rejection established",
+          "relationship_to_prediction": "no_false_destination_blocker_observed"
+        },
+        {
+          "submitted": "a.txt",
+          "created": false,
+          "errno": 17,
+          "enumerated_new_names": [],
+          "lookup_submitted": true,
+          "prediction": "not independently inspected: submitted name aliases an existing entry",
+          "relationship_to_prediction": "does_not_establish"
+        }
+      ]
+    }
+  ]
+}

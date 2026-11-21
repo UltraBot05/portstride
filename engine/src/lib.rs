@@ -123,7 +123,10 @@ fn issue(code: &'static str, severity: &'static str, label: String, evidence: St
     )];
     if matches!(
         code,
-        "CAPABILITY_UNVERIFIED" | "INSPECTION_INCOMPLETE" | "SOURCE_DEVICE_CHANGE"
+        "CAPABILITY_UNVERIFIED"
+            | "INSPECTION_INCOMPLETE"
+            | "SOURCE_DEVICE_CHANGE"
+            | "WINDOWS_FILENAME_PORTABILITY"
     ) {
         remedies.clear();
     }
@@ -182,6 +185,7 @@ fn issue(code: &'static str, severity: &'static str, label: String, evidence: St
             "INSUFFICIENT_CAPACITY" => "estimate",
             "CAPABILITY_UNVERIFIED"
             | "FILENAME_RESTRICTION_UNVERIFIED"
+            | "WINDOWS_FILENAME_PORTABILITY"
             | "SYMLINK_CAPABILITY_UNVERIFIED"
             | "SYMLINK_POLICY_UNRESOLVED" => "unknown",
             _ => "incompatibility",
@@ -562,6 +566,37 @@ impl Scanner<'_> {
             &label,
         ) {
             self.issues.push(finding);
+        }
+        if self
+            .capabilities
+            .filesystem
+            .as_deref()
+            .is_some_and(|fs| fs.eq_ignore_ascii_case("exfat") || fs.eq_ignore_ascii_case("msdos"))
+            && let Some(text) = name.to_str()
+        {
+            let stem = text
+                .split('.')
+                .next()
+                .unwrap_or_default()
+                .trim_end_matches(' ');
+            let upper = stem.to_ascii_uppercase();
+            let numbered_device = (upper.starts_with("COM") || upper.starts_with("LPT"))
+                && upper.len() == 4
+                && matches!(upper.as_bytes()[3], b'1'..=b'9');
+            if matches!(upper.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+                || numbered_device
+                || text.ends_with(['.', ' '])
+                || text.chars().any(|c| {
+                    c <= '\u{1f}' || matches!(c, '"' | '*' | ':' | '<' | '>' | '?' | '\\' | '|')
+                })
+            {
+                let mut finding = issue(
+                    "WINDOWS_FILENAME_PORTABILITY", "warning", label.clone(),
+                    "This name may not be portable to Windows; this does not establish that the selected destination rejects it.".into(),
+                );
+                finding.confidence = "unknown";
+                self.issues.push(finding);
+            }
         }
         if self
             .capabilities

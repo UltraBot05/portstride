@@ -58,3 +58,5 @@ Scenarios include flat files, nested and wide directories, empty directories, Un
 Disposable APFS, exFAT and FAT32 image preflight tests have been run; no removable-drive tests have been run. See [filesystem coverage](docs/filesystem-coverage.md) for the distinction between simulated and real tests.
 
 FAT-family source components that conflict with documented on-disk naming rules receive `FILENAME_RESTRICTION_UNVERIFIED` as a warning, not an automatic rename or a blocker: mounted-driver translation may permit them. On macOS 27.2.1, a disposable exFAT image accepted all tested punctuation names, including `:` and `?`. Other filename restrictions and mappings remain unverified.
+
+For FAT-family destinations, `WINDOWS_FILENAME_PORTABILITY` warns about a limited set of Windows naming risks, including selected reserved names, prohibited punctuation and trailing dot or space. It is not a destination blocker or a complete Windows validator; non-UTF-8 and other driver-specific behavior remain unknown. No automatic renaming occurs.
